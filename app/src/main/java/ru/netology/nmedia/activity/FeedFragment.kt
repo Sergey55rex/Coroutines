@@ -1,21 +1,29 @@
 package ru.netology.nmedia.activity
 
+import android.app.Activity
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import android.widget.Toast.*
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.flow.collect
 import ru.netology.nmedia.R
 import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostsAdapter
 import ru.netology.nmedia.databinding.FragmentFeedBinding
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.viewmodel.PostViewModel
+import kotlin.math.sign
 
 class FeedFragment : Fragment() {
 
@@ -54,7 +62,7 @@ class FeedFragment : Fragment() {
             }
         })
         binding.list.adapter = adapter
-        viewModel.dataState.observe(viewLifecycleOwner, { state ->
+        viewModel.dataState.observe(viewLifecycleOwner) { state ->
             binding.progress.isVisible = state.loading
             binding.swiperefresh.isRefreshing = state.refreshing
             if (state.error) {
@@ -62,11 +70,20 @@ class FeedFragment : Fragment() {
                     .setAction(R.string.retry_loading) { viewModel.loadPosts() }
                     .show()
             }
-        })
-        viewModel.data.observe(viewLifecycleOwner, { state ->
+        }
+        viewModel.data.observe(viewLifecycleOwner) { state ->
             adapter.submitList(state.posts)
             binding.emptyText.isVisible = state.empty
-        })
+        }
+
+        viewModel.newerCount.observe(viewLifecycleOwner) { state ->
+            // TODO: just log it, interaction must be in homework
+            Snackbar.make(binding.root, R.string.fresh_records, Snackbar.LENGTH_INDEFINITE)
+                .setAction(R.string.to_see) { viewModel.viewModelScope}
+                    .show()
+
+            println(state)
+        }
 
         binding.swiperefresh.setOnRefreshListener {
             viewModel.refreshPosts()
